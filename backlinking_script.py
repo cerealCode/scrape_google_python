@@ -24,22 +24,51 @@ user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4140.105 Safari/537.36 EdgA",
 ]
 
+# List of proxies to rotate
+proxies = [
+    "132.148.167.243:57943",
+    "161.97.134.22:39987",
+    # Add more proxies as needed
+]
+
+# List of social media domains to exclude
+social_media_domains = [
+    "youtube.com", "facebook.com", "twitter.com", "linkedin.com",
+    "instagram.com", "pinterest.com", "tiktok.com", "snapchat.com",
+]
+
+def is_social_media_url(url):
+    parsed_url = urlparse(url)
+    domain = parsed_url.netloc
+    for social_domain in social_media_domains:
+        if social_domain in domain:
+            return True
+    return False
+
+def get_random_proxy():
+    return random.choice(proxies)
+
 def scrape_emails(domain):
     user_agent = random.choice(user_agents)  # Select a random User-Agent
     headers = {"User-Agent": user_agent}
+    proxy = get_random_proxy()  # Get a random proxy
+    proxies = {
+        'http': f'http://{proxy}',
+        'https': f'http://{proxy}',
+    }
     max_retries = 5
     retry_delay = 1
     attempt = 0
 
     while attempt < max_retries:
         try:
-            response = requests.get(f'https://{domain}', headers=headers, timeout=10)
+            response = requests.get(f'https://{domain}', headers=headers, proxies=proxies, timeout=20)
             soup = BeautifulSoup(response.text, 'html.parser')
-            emails = [a['href'] for a in soup.find_all('a', href=True) if '@' in a['href']]
-            print("Found", len(emails), "emails")
+            emails = [a['href'] for a in soup.find_all('a', href=True) if '@' in a['href'] and not is_social_media_url(a['href'])]
+            print(f"Found {len(emails)} emails on {domain}")
             return emails
         except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e}. Retrying...")
+            print(f"Request failed for {domain}: {e}. Retrying...")
             attempt += 1
             time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
     print(f"Failed to scrape {domain} after {max_retries} attempts.")
@@ -49,6 +78,7 @@ def get_google_urls(query):
     urls = []
     for j in search(query, num_results=100):  # Adjust num_results as needed
         urls.append(j)
+        time.sleep(random.uniform(1, 3))  # Add a random wait time between requests
     print("Fetched", len(urls), "urls")
     return urls[:100]
 
@@ -56,7 +86,7 @@ def extract_domains(urls):
     domains = set()
     for url in urls:
         parsed_url = urlparse(url)
-        if parsed_url.netloc:
+        if parsed_url.netloc and not is_social_media_url(url):
             domains.add(parsed_url.netloc)
     print("Extracted", len(domains), "domains")
     return domains
@@ -64,12 +94,23 @@ def extract_domains(urls):
 def read_domains_from_csv(file_name):
     domains = set()
     try:
-        with open(file_name, mode='r', encoding='utf-8') as file:
+        with open(file_name, mode='r', encoding='utf-8-sig') as file:
             reader = csv.reader(file)
             next(reader)  # Skip header row if present
             for row in reader:
                 domains.add(row[0])
         print("Read", len(domains), "domains from CSV")
+    except UnicodeDecodeError:
+        print(f"UTF-8 decoding error encountered while reading {file_name}. Trying 'ISO-8859-1' encoding.")
+        try:
+            with open(file_name, mode='r', encoding='ISO-8859-1') as file:
+                reader = csv.reader(file)
+                next(reader)  # Skip header row if present
+                for row in reader:
+                    domains.add(row[0])
+            print("Read", len(domains), "domains from CSV using ISO-8859-1 encoding")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
     except FileNotFoundError:
         print(f"Error: File '{file_name}' not found.")
     except Exception as e:
@@ -124,6 +165,9 @@ if __name__ == "__main__":
     
     # Remove duplicates by converting the list to a set and back to a list
     emails_list = list(set(emails_list))
+    
+    # Log the total number of unique emails collected
+    print(f"Total unique emails collected: {len(emails_list)}")
     
     # Write the collected emails to the CSV file, stripping "mailto:" prefix
     write_emails_to_csv(contacts_csv_path, emails_list)
