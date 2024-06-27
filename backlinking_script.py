@@ -26,9 +26,60 @@ user_agents = [
 
 # List of proxies to rotate
 proxies = [
-    "132.148.167.243:57943",
-    "161.97.134.22:39987",
-    # Add more proxies as needed
+    "104.207.44.37:3128",
+    "104.207.35.76:3128",
+    "104.207.55.159:3128",
+    "104.167.26.91:3128",
+    "104.207.38.69:3128",
+    "104.207.42.248:3128",
+    "104.167.29.175:3128",
+    "104.207.49.189:3128",
+    "104.207.57.120:3128",
+    "104.167.31.6:3128",
+    "104.207.59.10:3128",
+    "104.207.34.149:3128",
+    "104.207.34.230:3128",
+    "104.207.45.215:3128",
+    "104.207.57.155:3128",
+    "104.207.54.103:3128",
+    "104.207.43.251:3128",
+    "104.207.47.77:3128",
+    "104.207.37.191:3128",
+    "104.207.47.44:3128",
+    "104.207.32.52:3128",
+    "104.167.27.150:3128",
+    "104.207.60.204:3128",
+    "104.207.63.63:3128",
+    "104.207.42.49:3128",
+    "104.167.27.240:3128",
+    "104.207.46.37:3128",
+    "104.207.59.131:3128",
+    "104.207.53.2:3128",
+    "104.167.30.80:3128",
+    "104.167.28.37:3128",
+    "104.207.43.68:3128",
+    "104.207.61.184:3128",
+    "104.207.38.49:3128",
+    "104.207.55.83:3128",
+    "104.167.24.101:3128",
+    "104.207.52.82:3128",
+    "104.207.60.255:3128",
+    "104.207.41.40:3128",
+    "104.207.57.178:3128",
+    "104.207.39.227:3128",
+    "104.207.63.54:3128",
+    "104.207.63.218:3128",
+    "104.207.34.55:3128",
+    "104.207.58.147:3128",
+    "104.207.47.137:3128",
+    "104.207.48.185:3128",
+    "104.207.36.131:3128",
+    "104.207.40.30:3128",
+    "104.207.54.35:3128",
+    "104.207.58.85:3128",
+    "104.207.61.206:3128",
+    "104.207.57.168:3128",
+    "104.167.30.7:3128",
 ]
 
 # List of social media domains to exclude
@@ -79,8 +130,8 @@ def get_google_urls(query):
     for j in search(query, num_results=100):  # Adjust num_results as needed
         urls.append(j)
         time.sleep(random.uniform(1, 3))  # Add a random wait time between requests
-    print("Fetched", len(urls), "urls")
-    return urls[:100]
+    print(f"Fetched {len(urls)} urls for query '{query}'")
+    return urls
 
 def extract_domains(urls):
     domains = set()
@@ -141,9 +192,18 @@ def safe_scrape_emails(domain):
     return emails
 
 if __name__ == "__main__":
-    query = "experiencia de usuario blog"
-    urls = get_google_urls(query)
-    domains = extract_domains(urls)
+    keywords = [
+        "inteligencia artificial aplicada a la empresa blog",
+        "experiencia de usuario blog",
+        # Add more keywords as needed
+    ]
+
+    all_urls = []
+    for keyword in keywords:
+        urls = get_google_urls(keyword)
+        all_urls.extend(urls)
+    
+    domains = extract_domains(all_urls)
     
     # Use absolute paths
     current_directory = os.path.dirname(os.path.abspath(__file__))
